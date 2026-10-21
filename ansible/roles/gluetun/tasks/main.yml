@@ -1,0 +1,26 @@
+---
+- name: Create Gluetun directory
+  ansible.builtin.file:
+    path: "{{ data_dir }}/gluetun"
+    state: directory
+    mode: "0755"
+
+- name: Deploy Gluetun docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/gluetun/docker-compose.yml"
+    mode: "0600"
+  no_log: true
+
+- name: Start Gluetun
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/gluetun"
+    state: present
+  register: gluetun_up
+
+# qBittorrent uses the network of the gluetun container,
+# so it must be restarted whenever gluetun is recreated.
+- name: Restart qBittorrent if Gluetun was recreated
+  ansible.builtin.command: docker restart qbittorrent
+  when: gluetun_up is changed
+  failed_when: false

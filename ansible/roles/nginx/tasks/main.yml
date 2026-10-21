@@ -1,0 +1,33 @@
+---
+- name: Create nginx directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ data_dir }}/nginx"
+    - "{{ data_dir }}/nginx/conf"
+    - "{{ data_dir }}/nginx/html"
+
+- name: Deploy nginx config
+  ansible.builtin.template:
+    src: default.conf.j2
+    dest: "{{ data_dir }}/nginx/conf/default.conf"
+    mode: "0644"
+
+- name: Deploy nginx index.html
+  ansible.builtin.copy:
+    src: index.html
+    dest: "{{ data_dir }}/nginx/html/index.html"
+    mode: "0644"
+
+- name: Deploy nginx docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/nginx/docker-compose.yml"
+    mode: "0644"
+
+- name: Start nginx
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/nginx"
+    state: present

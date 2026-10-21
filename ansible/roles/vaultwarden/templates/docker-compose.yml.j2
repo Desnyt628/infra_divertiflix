@@ -1,0 +1,29 @@
+services:
+  vaultwarden:
+    image: {{ images.vaultwarden }}
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      TZ: {{ timezone }}
+      DOMAIN: https://vaultwarden.{{ domain }}
+      SIGNUPS_ALLOWED: "{{ vaultwarden_signups_allowed | lower }}"
+      # "$" must be doubled in compose files (argon2 hashes contain it)
+      ADMIN_TOKEN: {{ vaultwarden_admin_token | replace('$', '$$') | to_json }}
+    volumes:
+      - {{ data_dir }}/vaultwarden/data:/data
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.vaultwarden.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vaultwarden.rule=Host(`vaultwarden.{{ domain }}`)"
+      - "traefik.http.routers.vaultwarden.entrypoints=websecure"
+      - "traefik.http.routers.vaultwarden.tls=true"
+      - "traefik.http.routers.vaultwarden.tls.certresolver=step-ca"
+      - "traefik.http.services.vaultwarden.loadbalancer.server.port={{ services.vaultwarden.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

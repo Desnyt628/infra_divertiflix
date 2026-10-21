@@ -1,0 +1,29 @@
+services:
+  ntfy:
+    image: {{ images.ntfy }}
+    container_name: ntfy
+    restart: unless-stopped
+    command:
+      - serve
+    environment:
+      TZ: {{ timezone }}
+    volumes:
+      - {{ data_dir }}/ntfy/cache:/var/cache/ntfy
+      - {{ data_dir }}/ntfy/data:/var/lib/ntfy
+      - {{ data_dir }}/ntfy/server.yml:/etc/ntfy/server.yml:ro
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.ntfy.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ntfy.rule=Host(`ntfy.{{ domain }}`)"
+      - "traefik.http.routers.ntfy.entrypoints=websecure"
+      - "traefik.http.routers.ntfy.tls=true"
+      - "traefik.http.routers.ntfy.tls.certresolver=step-ca"
+      - "traefik.http.services.ntfy.loadbalancer.server.port={{ services.ntfy.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

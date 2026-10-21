@@ -1,0 +1,21 @@
+---
+- name: Create GLPI directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ data_dir }}/glpi/data"
+    - "{{ data_dir }}/glpi/mysql"
+
+- name: Deploy GLPI docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/glpi/docker-compose.yml"
+    mode: "0600"
+  no_log: true
+
+- name: Start GLPI
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/glpi"
+    state: present

@@ -1,0 +1,17 @@
+# OpenTofu
+tofu/**/.terraform/
+tofu/**/*.tfstate*
+tofu/**/plan
+tofu/**/*.tfvars
+!tofu/**/*.tfvars.example
+
+# Ansible
+ansible/inventory/hosts.yml
+ansible/group_vars/all/vault.yml
+ansible/collections/ansible_collections/
+ansible/.secret/
+
+# Certificates and keys
+*.crt
+*.key
+*.pem

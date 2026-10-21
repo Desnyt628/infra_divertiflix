@@ -1,0 +1,25 @@
+domain={{ domain }}
+no-resolv
+
+# Upstream DNS servers
+{% for s in dns_upstreams %}
+server={{ s }}
+{% endfor %}
+
+# External names -> Docker host (Traefik)
+{% for name, svc in services.items() if svc.port is defined %}
+address=/{{ name | replace('_', '-') }}.{{ domain }}/{{ docker_host_ip }}
+{% endfor %}
+{% for h in dns_extra_hosts %}
+address=/{{ h }}.{{ domain }}/{{ docker_host_ip }}
+{% endfor %}
+
+# Internal Docker names
+{% for name, svc in services.items() %}
+address=/{{ name | replace('_', '-') }}/{{ svc.ip }}
+{% endfor %}
+# qBittorrent shares the network of the gluetun container
+address=/qbittorrent/{{ services.gluetun.ip }}
+
+log-queries
+log-facility=-

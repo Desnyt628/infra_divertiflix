@@ -1,0 +1,29 @@
+services:
+  cleanuparr:
+    image: {{ images.cleanuparr }}
+    container_name: cleanuparr
+    restart: unless-stopped
+    environment:
+      PORT: "{{ services.cleanuparr.port }}"
+      PUID: "{{ puid }}"
+      PGID: "{{ pgid }}"
+      TZ: {{ timezone }}
+    volumes:
+      - {{ data_dir }}/cleanuparr/config:/config
+      - {{ storage_dir }}:/data
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.cleanuparr.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cleanuparr.rule=Host(`cleanuparr.{{ domain }}`)"
+      - "traefik.http.routers.cleanuparr.entrypoints=websecure"
+      - "traefik.http.routers.cleanuparr.tls=true"
+      - "traefik.http.routers.cleanuparr.tls.certresolver=step-ca"
+      - "traefik.http.services.cleanuparr.loadbalancer.server.port={{ services.cleanuparr.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

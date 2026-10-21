@@ -1,0 +1,25 @@
+services:
+  step-ca:
+    image: {{ images.step_ca }}
+    container_name: step-ca
+    restart: unless-stopped
+    environment:
+      DOCKER_STEPCA_INIT_NAME: "divertiflixCA"
+      DOCKER_STEPCA_INIT_DNS_NAMES: "step-ca,step-ca.{{ domain }}"
+      DOCKER_STEPCA_INIT_ACME: "true"
+      DOCKER_STEPCA_INIT_REMOTE_MANAGEMENT: "true"
+      DOCKER_STEPCA_INIT_PASSWORD_FILE: "/home/step/password.txt"
+    volumes:
+      - {{ data_dir }}/step-ca:/home/step
+    ports:
+      - "{{ step_ca_listen_ip }}:444:444"
+      - "{{ step_ca_listen_ip }}:9000:9000"
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.step_ca.ip }}
+    dns:
+      - {{ services.dns.ip }}
+
+networks:
+  {{ docker_network_name }}:
+    external: true

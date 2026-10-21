@@ -1,0 +1,18 @@
+---
+- name: Create Homarr directory
+  ansible.builtin.file:
+    path: "{{ data_dir }}/homarr/appdata"
+    state: directory
+    mode: "0755"
+
+- name: Deploy Homarr docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/homarr/docker-compose.yml"
+    mode: "0600"
+  no_log: true
+
+- name: Start Homarr
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/homarr"
+    state: present

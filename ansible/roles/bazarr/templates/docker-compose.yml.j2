@@ -1,0 +1,28 @@
+services:
+  bazarr:
+    image: {{ images.bazarr }}
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      PUID: "{{ puid }}"
+      PGID: "{{ pgid }}"
+      TZ: {{ timezone }}
+    volumes:
+      - {{ data_dir }}/bazarr/config:/config
+      - {{ storage_dir }}:/data
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.bazarr.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.{{ domain }}`)"
+      - "traefik.http.routers.bazarr.entrypoints=websecure"
+      - "traefik.http.routers.bazarr.tls=true"
+      - "traefik.http.routers.bazarr.tls.certresolver=step-ca"
+      - "traefik.http.services.bazarr.loadbalancer.server.port={{ services.bazarr.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

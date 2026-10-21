@@ -1,0 +1,28 @@
+services:
+  radarr:
+    image: {{ images.radarr }}
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      PUID: "{{ puid }}"
+      PGID: "{{ pgid }}"
+      TZ: {{ timezone }}
+    volumes:
+      - {{ data_dir }}/radarr/config:/config
+      - {{ storage_dir }}:/data
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.radarr.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.radarr.rule=Host(`radarr.{{ domain }}`)"
+      - "traefik.http.routers.radarr.entrypoints=websecure"
+      - "traefik.http.routers.radarr.tls=true"
+      - "traefik.http.routers.radarr.tls.certresolver=step-ca"
+      - "traefik.http.services.radarr.loadbalancer.server.port={{ services.radarr.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

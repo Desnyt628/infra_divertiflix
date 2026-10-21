@@ -1,0 +1,57 @@
+---
+- name: Stop and disable systemd-resolved (frees port 53)
+  ansible.builtin.service:
+    name: systemd-resolved
+    state: stopped
+    enabled: false
+  failed_when: false   # not installed on some Debian cloud images
+
+- name: Remove the resolv.conf symlink (otherwise the copy writes through it)
+  ansible.builtin.file:
+    path: /etc/resolv.conf
+    state: absent
+
+- name: Create a static resolv.conf
+  ansible.builtin.copy:
+    dest: /etc/resolv.conf
+    mode: "0644"
+    content: |
+      {% for s in dns_upstreams %}
+      nameserver {{ s }}
+      {% endfor %}
+
+- name: Create DNS directory
+  ansible.builtin.file:
+    path: "{{ data_dir }}/dns"
+    state: directory
+    mode: "0755"
+
+- name: Generate dnsmasq configuration from the services map
+  ansible.builtin.template:
+    src: dnsmasq.conf.j2
+    dest: "{{ data_dir }}/dns/dnsmasq.conf"
+    mode: "0644"
+  register: dnsmasq_conf
+
+- name: Deploy DNS docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/dns/docker-compose.yml"
+    mode: "0644"
+
+- name: Start DNS
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/dns"
+    state: present
+    recreate: "{{ 'always' if dnsmasq_conf.changed else 'auto' }}"
+
+# ---- Check ----
+- name: Resolve a service name through the new DNS
+  ansible.builtin.command: "dig +short @{{ docker_host_ip }} traefik.{{ domain }}"
+  register: dns_check
+  changed_when: false
+  failed_when: false
+
+- name: Show DNS check
+  ansible.builtin.debug:
+    msg: "traefik.{{ domain }} -> {{ dns_check.stdout | default('no answer') }}"

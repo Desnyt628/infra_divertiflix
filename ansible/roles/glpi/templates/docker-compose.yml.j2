@@ -1,0 +1,56 @@
+services:
+  glpi:
+    image: {{ images.glpi }}
+    container_name: glpi
+    restart: unless-stopped
+    environment:
+      TZ: {{ timezone }}
+      TIMEZONE: {{ timezone }}
+      MARIADB_HOST: glpi-db
+      MARIADB_DATABASE: glpi
+      MARIADB_USER: glpi
+      MARIADB_PASSWORD: {{ glpi_db_password | replace('$', '$$') | to_json }}
+    volumes:
+      - {{ data_dir }}/glpi/data:/var/www/html/glpi
+    depends_on:
+      glpi-db:
+        condition: service_healthy
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.glpi.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.glpi.rule=Host(`glpi.{{ domain }}`)"
+      - "traefik.http.routers.glpi.entrypoints=websecure"
+      - "traefik.http.routers.glpi.tls=true"
+      - "traefik.http.routers.glpi.tls.certresolver=step-ca"
+      - "traefik.http.services.glpi.loadbalancer.server.port={{ services.glpi.port }}"
+
+  glpi-db:
+    image: {{ images.mariadb }}
+    container_name: glpi-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: {{ glpi_db_root_password | replace('$', '$$') | to_json }}
+      MARIADB_DATABASE: glpi
+      MARIADB_USER: glpi
+      MARIADB_PASSWORD: {{ glpi_db_password | replace('$', '$$') | to_json }}
+    volumes:
+      - {{ data_dir }}/glpi/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.glpi_db.ip }}
+    dns:
+      - {{ services.dns.ip }}
+
+networks:
+  {{ docker_network_name }}:
+    external: true

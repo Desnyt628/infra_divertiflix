@@ -1,0 +1,84 @@
+---
+- name: Install prerequisites
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - dnsutils
+    state: present
+    update_cache: true
+
+- name: Ensure keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Download Docker GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/debian/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: Add Docker repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}
+      signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable
+    state: present
+    filename: docker
+
+- name: Install Docker, Compose plugin and the Python SDK used by Ansible modules
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+      - python3-docker
+    state: present
+    update_cache: true
+
+- name: Ensure Docker service is running
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Allow the SSH user to run docker without sudo
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Create the shared Docker network with a fixed subnet
+  community.docker.docker_network:
+    name: "{{ docker_network_name }}"
+    state: present
+    ipam_config:
+      - subnet: "{{ docker_network_subnet }}"
+        gateway: "{{ docker_network_gateway }}"
+
+# ---- Checks (evidence for the demo) ----
+- name: Check Docker and Compose versions
+  ansible.builtin.command: "{{ item }}"
+  loop:
+    - docker --version
+    - docker compose version
+  register: docker_versions
+  changed_when: false
+
+- name: Run test container
+  ansible.builtin.command: docker run --rm hello-world
+  register: hello_world
+  changed_when: false
+
+- name: Show check results
+  ansible.builtin.debug:
+    msg:
+      - "{{ docker_versions.results | map(attribute='stdout') | list }}"
+      - "{{ hello_world.stdout_lines | first }}"

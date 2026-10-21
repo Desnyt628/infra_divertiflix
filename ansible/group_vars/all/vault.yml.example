@@ -1,0 +1,18 @@
+---
+# Copy to vault.yml, fill in real values, then: ansible-vault encrypt vault.yml
+step_ca_password: CHANGE_ME
+immich_db_password: CHANGE_ME
+glpi_db_password: CHANGE_ME
+glpi_db_root_password: CHANGE_ME
+bookstack_db_password: CHANGE_ME
+bookstack_db_root_password: CHANGE_ME
+bookstack_app_key: CHANGE_ME          # format base64:...
+vaultwarden_admin_token: CHANGE_ME
+homarr_encryption_key: CHANGE_ME
+mullvad_private_key: CHANGE_ME
+mullvad_addresses: CHANGE_ME
+ntfy_admin_user: CHANGE_ME
+ntfy_admin_password_hash: CHANGE_ME   # bcrypt hash
+xray_uuid: CHANGE_ME
+xray_public_key: CHANGE_ME
+xray_short_id: CHANGE_ME

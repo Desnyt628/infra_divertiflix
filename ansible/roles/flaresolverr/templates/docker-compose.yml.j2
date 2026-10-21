@@ -1,0 +1,17 @@
+services:
+  flaresolverr:
+    image: {{ images.flaresolverr }}
+    container_name: flaresolverr
+    restart: unless-stopped
+    environment:
+      TZ: {{ timezone }}
+      LOG_LEVEL: info
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.flaresolverr.ip }}
+    dns:
+      - {{ services.dns.ip }}
+
+networks:
+  {{ docker_network_name }}:
+    external: true

@@ -1,0 +1,26 @@
+---
+- name: Create xray directory
+  ansible.builtin.file:
+    path: "{{ data_dir }}/xray"
+    state: directory
+    mode: "0755"
+
+- name: Deploy xray config
+  ansible.builtin.template:
+    src: config.json.j2
+    dest: "{{ data_dir }}/xray/config.json"
+    mode: "0600"
+  no_log: true
+  register: xray_config
+
+- name: Deploy xray docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/xray/docker-compose.yml"
+    mode: "0644"
+
+- name: Start xray
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/xray"
+    state: present
+    recreate: "{{ 'always' if xray_config.changed else 'auto' }}"

@@ -1,0 +1,6 @@
+---
+# Secrets (xray_uuid, xray_public_key, xray_short_id) live in group_vars/all/vault.yml
+xray_server_address: SERVER_IP_OR_HOSTNAME
+xray_server_port: 443
+xray_server_name: TARGET.SITE
+xray_fingerprint: chrome

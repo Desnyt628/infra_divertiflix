@@ -1,0 +1,19 @@
+# Copy to terraform.tfvars (git-ignored).
+# The API token goes in the environment, never in this file:
+#   export TF_VAR_proxmox_api_token='terraform@pve!provider=<secret>'
+
+proxmox_api_endpoint = "https://192.168.0.2:8006"
+proxmox_node         = "proxmax"
+
+datastore_images   = "local"
+datastore_snippets = "local"
+datastore_vm       = "a1"
+
+vm_name          = "docker-host"
+vm_cores         = 4
+vm_memory        = 16384
+vm_media_disk_gb = 500
+
+vm_ipv4_address = "192.168.0.236/24"
+vm_gateway      = "192.168.0.1"
+domain          = "home.arpa"

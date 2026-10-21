@@ -1,0 +1,38 @@
+services:
+  traefik:
+    image: {{ images.traefik }}
+    container_name: traefik
+    restart: unless-stopped
+    command:
+      - "--log.level={{ traefik_log_level }}"
+      - "--accesslog=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network={{ docker_network_name }}"
+      # ACME through Step CA
+      - "--certificatesresolvers.step-ca.acme.email={{ acme_email }}"
+      - "--certificatesresolvers.step-ca.acme.storage=/data/acme.json"
+      - "--certificatesresolvers.step-ca.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.step-ca.acme.caserver={{ acme_ca_url }}"
+    environment:
+      - TZ={{ timezone }}
+      - LEGO_CA_CERTIFICATES=/etc/ssl/certs/step-ca.crt
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # TODO: replace the direct docker.sock mount with a socket-proxy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - {{ data_dir }}/traefik:/data
+      - {{ data_dir }}/traefik/root_ca.crt:/etc/ssl/certs/step-ca.crt:ro
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.traefik.ip }}
+    dns:
+      - {{ services.dns.ip }}
+
+networks:
+  {{ docker_network_name }}:
+    external: true

@@ -1,0 +1,14 @@
+services:
+  qbittorrent:
+    image: {{ images.qbittorrent }}
+    container_name: qbittorrent
+    restart: unless-stopped
+    network_mode: "container:gluetun"
+    environment:
+      PUID: "{{ puid }}"
+      PGID: "{{ pgid }}"
+      TZ: {{ timezone }}
+      WEBUI_PORT: "8080"
+    volumes:
+      - {{ data_dir }}/qbittorrent/config:/config
+      - {{ storage_dir }}:/data

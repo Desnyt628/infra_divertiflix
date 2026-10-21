@@ -1,0 +1,31 @@
+---
+- name: Docker host (Divertiflix)
+  hosts: all
+  become: true
+  roles:
+    - { role: mount, tags: mount }
+    - { role: docker, tags: docker }
+    - { role: dns, tags: dns }
+    - { role: small_step, tags: small_step }
+    - { role: traefik, tags: traefik }
+    - { role: media_storage, tags: media_storage }
+    - { role: jellyfin, tags: jellyfin }
+    - { role: gluetun, tags: gluetun }
+    - { role: qbittorrent, tags: qbittorrent }
+    - { role: prowlarr, tags: prowlarr }
+    - { role: flaresolverr, tags: flaresolverr }
+    - { role: sonarr, tags: sonarr }
+    - { role: radarr, tags: radarr }
+    - { role: bazarr, tags: bazarr }
+    - { role: jellyseerr, tags: jellyseerr }
+    - { role: homarr, tags: homarr }
+    - { role: immich, tags: immich }
+    - { role: cleanuparr, tags: cleanuparr }
+    - { role: vaultwarden, tags: vaultwarden }
+    - { role: glpi, tags: glpi }
+    - { role: bookstack, tags: bookstack }
+    - { role: ntfy, tags: ntfy }
+    # Not deployed by default:
+    # - { role: nginx,        tags: nginx }
+    # - { role: xray,         tags: xray }
+    # - { role: uptime_kuma,  tags: uptime_kuma }

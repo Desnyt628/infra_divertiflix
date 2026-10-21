@@ -1,0 +1,19 @@
+---
+- name: Create qBittorrent directories
+  ansible.builtin.file:
+    path: "{{ data_dir }}/qbittorrent/config"
+    state: directory
+    owner: "{{ puid }}"
+    group: "{{ pgid }}"
+    mode: "0755"
+
+- name: Deploy qBittorrent docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/qbittorrent/docker-compose.yml"
+    mode: "0644"
+
+- name: Start qBittorrent
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/qbittorrent"
+    state: present

@@ -1,0 +1,17 @@
+---
+- name: Create FlareSolverr directory
+  ansible.builtin.file:
+    path: "{{ data_dir }}/flaresolverr"
+    state: directory
+    mode: "0755"
+
+- name: Deploy FlareSolverr docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/flaresolverr/docker-compose.yml"
+    mode: "0644"
+
+- name: Start FlareSolverr
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/flaresolverr"
+    state: present

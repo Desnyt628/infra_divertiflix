@@ -1,0 +1,27 @@
+---
+- name: Create ntfy directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ data_dir }}/ntfy/cache"
+    - "{{ data_dir }}/ntfy/data"
+
+- name: Deploy ntfy server config
+  ansible.builtin.template:
+    src: server.yml.j2
+    dest: "{{ data_dir }}/ntfy/server.yml"
+    mode: "0600"
+  no_log: true
+
+- name: Deploy ntfy docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/ntfy/docker-compose.yml"
+    mode: "0644"
+
+- name: Start ntfy
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/ntfy"
+    state: present

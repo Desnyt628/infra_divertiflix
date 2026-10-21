@@ -1,0 +1,46 @@
+---
+- name: Ensure Step CA directory exists
+  ansible.builtin.file:
+    path: "{{ data_dir }}/step-ca"
+    state: directory
+    mode: "0755"
+    owner: 1000
+    group: 1000
+
+- name: Create password file
+  ansible.builtin.copy:
+    content: "{{ step_ca_password }}"
+    dest: "{{ data_dir }}/step-ca/password.txt"
+    mode: "0600"
+    owner: 1000
+    group: 1000
+  no_log: true
+
+- name: Deploy Step CA docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/step-ca/docker-compose.yml"
+    mode: "0644"
+
+- name: Start Step CA
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/step-ca"
+    state: present
+
+- name: Wait for Step CA to answer
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 9000
+    delay: 5
+    timeout: 60
+
+- name: Wait for the root certificate to exist
+  ansible.builtin.wait_for:
+    path: "{{ data_dir }}/step-ca/certs/root_ca.crt"
+    timeout: 60
+
+- name: Fetch root CA to the jump host (cert/ folder of the repo)
+  ansible.builtin.fetch:
+    src: "{{ data_dir }}/step-ca/certs/root_ca.crt"
+    dest: "{{ playbook_dir }}/../cert/step_ca_root_ca.crt"
+    flat: true

@@ -1,0 +1,49 @@
+{
+  "log": { "loglevel": "warning" },
+  "inbounds": [
+    {
+      "tag": "socks-in",
+      "listen": "0.0.0.0",
+      "port": 1080,
+      "protocol": "socks",
+      "settings": { "udp": true }
+    },
+    {
+      "tag": "ovpn-in",
+      "listen": "0.0.0.0",
+      "port": 1194,
+      "protocol": "dokodemo-door",
+      "settings": { "address": "127.0.0.1", "port": 1194, "network": "tcp" }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "{{ xray_server_address }}",
+            "port": {{ xray_server_port }},
+            "users": [
+              {
+                "id": "{{ xray_uuid }}",
+                "flow": "xtls-rprx-vision",
+                "encryption": "none"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "{{ xray_server_name }}",
+          "fingerprint": "{{ xray_fingerprint }}",
+          "publicKey": "{{ xray_public_key }}",
+          "shortId": "{{ xray_short_id }}"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+services:
+  gluetun:
+    image: {{ images.gluetun }}
+    container_name: gluetun
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      TZ: {{ timezone }}
+      VPN_SERVICE_PROVIDER: mullvad
+      VPN_TYPE: wireguard
+      WIREGUARD_PRIVATE_KEY: {{ mullvad_private_key | to_json }}
+      WIREGUARD_ADDRESSES: {{ mullvad_addresses | to_json }}
+      SERVER_CITIES: {{ vpn_server_cities }}
+      # Kill switch + access to the web UI from the Docker network
+      FIREWALL: "on"
+      FIREWALL_OUTBOUND_SUBNETS: {{ docker_network_subnet }}
+      FIREWALL_INPUT_PORTS: "8080"
+    volumes:
+      - {{ data_dir }}/gluetun:/gluetun
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.gluetun.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      # qBittorrent has no network of its own: Traefik reaches it through gluetun
+      - "traefik.enable=true"
+      - "traefik.http.routers.qbittorrent.rule=Host(`qbittorrent.{{ domain }}`)"
+      - "traefik.http.routers.qbittorrent.entrypoints=websecure"
+      - "traefik.http.routers.qbittorrent.tls=true"
+      - "traefik.http.routers.qbittorrent.tls.certresolver=step-ca"
+      - "traefik.http.services.qbittorrent.loadbalancer.server.port=8080"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

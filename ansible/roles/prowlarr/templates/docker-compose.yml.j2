@@ -1,0 +1,27 @@
+services:
+  prowlarr:
+    image: {{ images.prowlarr }}
+    container_name: prowlarr
+    restart: unless-stopped
+    environment:
+      PUID: "{{ puid }}"
+      PGID: "{{ pgid }}"
+      TZ: {{ timezone }}
+    volumes:
+      - {{ data_dir }}/prowlarr/config:/config
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.prowlarr.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.{{ domain }}`)"
+      - "traefik.http.routers.prowlarr.entrypoints=websecure"
+      - "traefik.http.routers.prowlarr.tls=true"
+      - "traefik.http.routers.prowlarr.tls.certresolver=step-ca"
+      - "traefik.http.services.prowlarr.loadbalancer.server.port={{ services.prowlarr.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

@@ -1,0 +1,26 @@
+services:
+  jellyseerr:
+    image: {{ images.jellyseerr }}
+    container_name: jellyseerr
+    restart: unless-stopped
+    environment:
+      TZ: {{ timezone }}
+      LOG_LEVEL: info
+    volumes:
+      - {{ data_dir }}/jellyseerr/config:/app/config
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.jellyseerr.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyseerr.rule=Host(`jellyseerr.{{ domain }}`)"
+      - "traefik.http.routers.jellyseerr.entrypoints=websecure"
+      - "traefik.http.routers.jellyseerr.tls=true"
+      - "traefik.http.routers.jellyseerr.tls.certresolver=step-ca"
+      - "traefik.http.services.jellyseerr.loadbalancer.server.port={{ services.jellyseerr.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

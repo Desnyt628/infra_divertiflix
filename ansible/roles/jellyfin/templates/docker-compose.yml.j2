@@ -1,0 +1,28 @@
+services:
+  jellyfin:
+    image: {{ images.jellyfin }}
+    container_name: jellyfin
+    restart: unless-stopped
+    environment:
+      PUID: "{{ puid }}"
+      PGID: "{{ pgid }}"
+      TZ: {{ timezone }}
+    volumes:
+      - {{ data_dir }}/jellyfin/config:/config
+      - {{ storage_dir }}:/data
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.jellyfin.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jellyfin.rule=Host(`jellyfin.{{ domain }}`)"
+      - "traefik.http.routers.jellyfin.entrypoints=websecure"
+      - "traefik.http.routers.jellyfin.tls=true"
+      - "traefik.http.routers.jellyfin.tls.certresolver=step-ca"
+      - "traefik.http.services.jellyfin.loadbalancer.server.port={{ services.jellyfin.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

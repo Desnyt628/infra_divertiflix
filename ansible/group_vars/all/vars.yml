@@ -1,0 +1,100 @@
+---
+# ---------- General ----------
+domain: home.arpa
+timezone: America/Toronto
+
+# ---------- Docker host ----------
+docker_host_ip: 192.168.0.236      # VM IP, adapt to the network plan
+data_dir: /srv/docker              # config of each service
+storage_dir: /srv/storage          # media and large data
+storage_device: /dev/vdb           # 2nd virtual disk created by OpenTofu
+puid: 1000
+pgid: 1000
+
+# ---------- Docker network ----------
+docker_network_name: proxy
+docker_network_subnet: 172.18.0.0/24
+docker_network_gateway: 172.18.0.1
+dns_upstreams:
+  - 1.1.1.1
+  - 8.8.8.8
+
+# ---------- DNS ----------
+# Extra external names (<name>.{{ domain }}) that point to the Docker host
+dns_extra_hosts:
+  - traefik
+  - step-ca
+  - qbittorrent                    # exposed through the gluetun container
+
+# ---------- Step CA ----------
+step_ca_listen_ip: 0.0.0.0         # use 127.0.0.1 if no other host needs the ACME endpoint
+
+# ---------- Traefik ----------
+traefik_log_level: INFO
+acme_email: "admin@{{ domain }}"
+acme_ca_url: https://step-ca:9000/acme/acme/directory
+
+# ---------- VPN (gluetun) ----------
+vpn_server_cities: Montreal
+
+# ---------- Vaultwarden ----------
+vaultwarden_signups_allowed: true   # set to false once the accounts are created
+
+# ---------- Services ----------
+# ip:   fixed address in the Docker network
+# port: internal port that Traefik forwards to (omit if not exposed)
+# The URL of each service is <name>.{{ domain }} (underscores become dashes)
+services:
+  traefik: { ip: 172.18.0.10 }
+  step_ca: { ip: 172.18.0.20 }
+  nginx: { ip: 172.18.0.30, port: 80 }
+  dns: { ip: 172.18.0.53 }
+  prowlarr: { ip: 172.18.0.101, port: 9696 }
+  sonarr: { ip: 172.18.0.102, port: 8989 }
+  radarr: { ip: 172.18.0.103, port: 7878 }
+  gluetun: { ip: 172.18.0.104 }   # exposes qBittorrent (port 8080)
+  jellyfin: { ip: 172.18.0.105, port: 8096 }
+  bazarr: { ip: 172.18.0.107, port: 6767 }
+  flaresolverr: { ip: 172.18.0.109 }
+  vaultwarden: { ip: 172.18.0.110, port: 80 }
+  glpi: { ip: 172.18.0.111, port: 80 }
+  xray: { ip: 172.18.0.113 }
+  homarr: { ip: 172.18.0.115, port: 3000 }
+  immich: { ip: 172.18.0.116, port: 2283 }
+  immich_postgres: { ip: 172.18.0.117 }
+  immich_redis: { ip: 172.18.0.118 }
+  cleanuparr: { ip: 172.18.0.119, port: 11011 }
+  glpi_db: { ip: 172.18.0.120 }
+  bookstack: { ip: 172.18.0.121, port: 80 }
+  bookstack_db: { ip: 172.18.0.122 }
+  jellyseerr: { ip: 172.18.0.123, port: 5055 }
+  ntfy: { ip: 172.18.0.124, port: 80 }
+  uptime_kuma: { ip: 172.18.0.126, port: 3001 }
+
+# ---------- Image versions ----------
+# TODO: replace "latest" with a fixed version tag before the demo
+images:
+  traefik: traefik:v3.6.7
+  step_ca: smallstep/step-ca:latest
+  dnsmasq: strm/dnsmasq:latest
+  jellyfin: linuxserver/jellyfin:latest
+  sonarr: linuxserver/sonarr:latest
+  radarr: linuxserver/radarr:latest
+  prowlarr: linuxserver/prowlarr:latest
+  bazarr: linuxserver/bazarr:latest
+  qbittorrent: linuxserver/qbittorrent:latest
+  gluetun: qmcgaw/gluetun:latest
+  flaresolverr: ghcr.io/flaresolverr/flaresolverr:latest
+  homarr: ghcr.io/homarr-labs/homarr:latest
+  cleanuparr: ghcr.io/cleanuparr/cleanuparr:latest
+  jellyseerr: fallenbagel/jellyseerr:latest
+  vaultwarden: vaultwarden/server:latest
+  glpi: diouxx/glpi:latest
+  mariadb: mariadb:10.11
+  bookstack: lscr.io/linuxserver/bookstack:latest
+  ntfy: binwiederhier/ntfy:latest
+  immich_server: ghcr.io/immich-app/immich-server:release
+  immich_postgres: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
+  immich_redis: valkey/valkey:8-bookworm
+  uptime_kuma: louislam/uptime-kuma:latest
+  xray: ghcr.io/xtls/xray-core:latest

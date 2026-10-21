@@ -1,0 +1,19 @@
+---
+- name: Create Bazarr directories
+  ansible.builtin.file:
+    path: "{{ data_dir }}/bazarr/config"
+    state: directory
+    owner: "{{ puid }}"
+    group: "{{ pgid }}"
+    mode: "0755"
+
+- name: Deploy Bazarr docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/bazarr/docker-compose.yml"
+    mode: "0644"
+
+- name: Start Bazarr
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/bazarr"
+    state: present

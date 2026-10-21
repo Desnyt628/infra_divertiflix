@@ -1,0 +1,22 @@
+services:
+  xray:
+    image: {{ images.xray }}
+    container_name: xray
+    restart: unless-stopped
+    command:
+      - run
+      - -c
+      - /etc/xray/config.json
+    environment:
+      TZ: {{ timezone }}
+    volumes:
+      - {{ data_dir }}/xray/config.json:/etc/xray/config.json:ro
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.xray.ip }}
+    dns:
+      - {{ services.dns.ip }}
+
+networks:
+  {{ docker_network_name }}:
+    external: true

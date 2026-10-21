@@ -1,0 +1,17 @@
+---
+- name: Create Uptime Kuma directory
+  ansible.builtin.file:
+    path: "{{ data_dir }}/uptime-kuma/data"
+    state: directory
+    mode: "0755"
+
+- name: Deploy Uptime Kuma docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/uptime-kuma/docker-compose.yml"
+    mode: "0644"
+
+- name: Start Uptime Kuma
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/uptime-kuma"
+    state: present

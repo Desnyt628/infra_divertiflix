@@ -1,0 +1,60 @@
+services:
+  bookstack:
+    image: {{ images.bookstack }}
+    container_name: bookstack
+    restart: unless-stopped
+    environment:
+      PUID: "{{ puid }}"
+      PGID: "{{ pgid }}"
+      TZ: {{ timezone }}
+      APP_URL: https://bookstack.{{ domain }}
+      APP_KEY: {{ bookstack_app_key | to_json }}
+      DB_HOST: bookstack-db
+      DB_PORT: "3306"
+      DB_USERNAME: bookstack
+      DB_PASSWORD: {{ bookstack_db_password | replace('$', '$$') | to_json }}
+      DB_DATABASE: bookstack
+    volumes:
+      - {{ data_dir }}/bookstack/data:/config
+    depends_on:
+      bookstack-db:
+        condition: service_healthy
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.bookstack.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bookstack.rule=Host(`bookstack.{{ domain }}`)"
+      - "traefik.http.routers.bookstack.entrypoints=websecure"
+      - "traefik.http.routers.bookstack.tls=true"
+      - "traefik.http.routers.bookstack.tls.certresolver=step-ca"
+      - "traefik.http.services.bookstack.loadbalancer.server.port={{ services.bookstack.port }}"
+
+  bookstack-db:
+    image: {{ images.mariadb }}
+    container_name: bookstack-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: {{ bookstack_db_root_password | replace('$', '$$') | to_json }}
+      MARIADB_DATABASE: bookstack
+      MARIADB_USER: bookstack
+      MARIADB_PASSWORD: {{ bookstack_db_password | replace('$', '$$') | to_json }}
+    volumes:
+      - {{ data_dir }}/bookstack/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.bookstack_db.ip }}
+    dns:
+      - {{ services.dns.ip }}
+
+networks:
+  {{ docker_network_name }}:
+    external: true

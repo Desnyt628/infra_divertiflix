@@ -1,0 +1,26 @@
+services:
+  homarr:
+    image: {{ images.homarr }}
+    container_name: homarr
+    restart: unless-stopped
+    environment:
+      TZ: {{ timezone }}
+      SECRET_ENCRYPTION_KEY: {{ homarr_encryption_key | to_json }}
+    volumes:
+      - {{ data_dir }}/homarr/appdata:/appdata
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.homarr.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.homarr.rule=Host(`homarr.{{ domain }}`)"
+      - "traefik.http.routers.homarr.entrypoints=websecure"
+      - "traefik.http.routers.homarr.tls=true"
+      - "traefik.http.routers.homarr.tls.certresolver=step-ca"
+      - "traefik.http.services.homarr.loadbalancer.server.port={{ services.homarr.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

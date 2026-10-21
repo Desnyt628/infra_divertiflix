@@ -1,0 +1,21 @@
+---
+- name: Ensure mount point exists
+  ansible.builtin.file:
+    path: "{{ storage_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Create ext4 filesystem if the disk has none
+  community.general.filesystem:
+    fstype: ext4
+    dev: "{{ storage_device }}"
+
+- name: Mount disk and persist in fstab
+  ansible.posix.mount:
+    path: "{{ storage_dir }}"
+    src: "{{ storage_device }}"
+    fstype: ext4
+    opts: defaults
+    state: mounted

@@ -1,0 +1,32 @@
+---
+- name: Create Traefik directory
+  ansible.builtin.file:
+    path: "{{ data_dir }}/traefik"
+    state: directory
+    mode: "0755"
+
+- name: Copy Step CA root certificate to Traefik
+  ansible.builtin.copy:
+    src: "{{ data_dir }}/step-ca/certs/root_ca.crt"
+    dest: "{{ data_dir }}/traefik/root_ca.crt"
+    mode: "0644"
+    remote_src: true
+
+- name: Ensure acme.json exists with strict permissions
+  ansible.builtin.file:
+    path: "{{ data_dir }}/traefik/acme.json"
+    state: touch
+    mode: "0600"
+    modification_time: preserve
+    access_time: preserve
+
+- name: Deploy Traefik docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/traefik/docker-compose.yml"
+    mode: "0644"
+
+- name: Start Traefik
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/traefik"
+    state: present

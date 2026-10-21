@@ -1,0 +1,20 @@
+services:
+  dns:
+    image: {{ images.dnsmasq }}
+    container_name: dns
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - NET_BIND_SERVICE
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - {{ data_dir }}/dns/dnsmasq.conf:/etc/dnsmasq.conf:ro
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.dns.ip }}
+
+networks:
+  {{ docker_network_name }}:
+    external: true

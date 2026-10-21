@@ -1,0 +1,24 @@
+services:
+  nginx:
+    image: nginx:stable
+    container_name: nginx
+    restart: unless-stopped
+    volumes:
+      - {{ data_dir }}/nginx/conf:/etc/nginx/conf.d:ro
+      - {{ data_dir }}/nginx/html:/usr/share/nginx/html:ro
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.nginx.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nginx.rule=Host(`nginx.{{ domain }}`)"
+      - "traefik.http.routers.nginx.entrypoints=websecure"
+      - "traefik.http.routers.nginx.tls=true"
+      - "traefik.http.routers.nginx.tls.certresolver=step-ca"
+      - "traefik.http.services.nginx.loadbalancer.server.port={{ services.nginx.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

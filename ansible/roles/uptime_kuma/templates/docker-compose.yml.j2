@@ -1,0 +1,23 @@
+services:
+  uptime-kuma:
+    image: {{ images.uptime_kuma }}
+    container_name: uptime-kuma
+    restart: unless-stopped
+    volumes:
+      - {{ data_dir }}/uptime-kuma/data:/app/data
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.uptime_kuma.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.uptime-kuma.rule=Host(`uptime-kuma.{{ domain }}`)"
+      - "traefik.http.routers.uptime-kuma.entrypoints=websecure"
+      - "traefik.http.routers.uptime-kuma.tls=true"
+      - "traefik.http.routers.uptime-kuma.tls.certresolver=step-ca"
+      - "traefik.http.services.uptime-kuma.loadbalancer.server.port={{ services.uptime_kuma.port }}"
+
+networks:
+  {{ docker_network_name }}:
+    external: true

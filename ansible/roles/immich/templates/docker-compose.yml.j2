@@ -1,0 +1,61 @@
+services:
+  immich-server:
+    image: {{ images.immich_server }}
+    container_name: immich-server
+    restart: unless-stopped
+    environment:
+      TZ: {{ timezone }}
+      UPLOAD_LOCATION: /usr/src/app/upload
+      DB_HOSTNAME: immich-postgres
+      DB_USERNAME: immich
+      DB_PASSWORD: {{ immich_db_password | replace('$', '$$') | to_json }}
+      DB_DATABASE_NAME: immich
+      REDIS_HOSTNAME: immich-redis
+    volumes:
+      - {{ storage_dir }}/immich/upload:/usr/src/app/upload
+    depends_on:
+      - immich-postgres
+      - immich-redis
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.immich.ip }}
+    dns:
+      - {{ services.dns.ip }}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.immich.rule=Host(`immich.{{ domain }}`)"
+      - "traefik.http.routers.immich.entrypoints=websecure"
+      - "traefik.http.routers.immich.tls=true"
+      - "traefik.http.routers.immich.tls.certresolver=step-ca"
+      - "traefik.http.services.immich.loadbalancer.server.port={{ services.immich.port }}"
+
+  immich-redis:
+    image: {{ images.immich_redis }}
+    container_name: immich-redis
+    restart: unless-stopped
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.immich_redis.ip }}
+    dns:
+      - {{ services.dns.ip }}
+
+  immich-postgres:
+    image: {{ images.immich_postgres }}
+    container_name: immich-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: immich
+      POSTGRES_PASSWORD: {{ immich_db_password | replace('$', '$$') | to_json }}
+      POSTGRES_DB: immich
+      POSTGRES_INITDB_ARGS: --data-checksums
+    volumes:
+      - {{ storage_dir }}/immich/postgres:/var/lib/postgresql/data
+    networks:
+      {{ docker_network_name }}:
+        ipv4_address: {{ services.immich_postgres.ip }}
+    dns:
+      - {{ services.dns.ip }}
+
+networks:
+  {{ docker_network_name }}:
+    external: true

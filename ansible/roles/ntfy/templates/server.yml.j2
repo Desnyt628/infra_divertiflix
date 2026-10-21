@@ -1,0 +1,7 @@
+base-url: "https://ntfy.{{ domain }}"
+cache-file: "/var/cache/ntfy/cache.db"
+auth-file: "/var/lib/ntfy/auth.db"
+auth-default-access: "deny-all"
+behind-proxy: true
+auth-users:
+  - "{{ ntfy_admin_user }}:{{ ntfy_admin_password_hash }}:admin"

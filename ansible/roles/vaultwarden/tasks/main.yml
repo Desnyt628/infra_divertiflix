@@ -1,0 +1,18 @@
+---
+- name: Create Vaultwarden directories
+  ansible.builtin.file:
+    path: "{{ data_dir }}/vaultwarden/data"
+    state: directory
+    mode: "0755"
+
+- name: Deploy Vaultwarden docker-compose
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ data_dir }}/vaultwarden/docker-compose.yml"
+    mode: "0600"
+  no_log: true
+
+- name: Start Vaultwarden
+  community.docker.docker_compose_v2:
+    project_src: "{{ data_dir }}/vaultwarden"
+    state: present
