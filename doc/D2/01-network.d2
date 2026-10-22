@@ -1,0 +1,52 @@
+# Divertiflix: network overview (from the team diagram and vars.yml)
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+direction: right
+
+title: |md
+  # Divertiflix network
+  Docker host sits in lan1; the Docker bridge `proxy` is internal to the VM.
+| {near: top-center}
+
+wan: WAN { shape: cloud }
+
+homelab: "Homelab\n192.168.1.0/24" {
+  xray_server: "Xray server"
+  vpn_server: "VPN server"
+}
+
+opnsense: OPNsense {
+  classe: "classe (opt1)\n192.168.6.0/24"
+  vpn_net: "VPN\n192.168.11.0/24"
+
+  lan1: "lan1\n192.168.8.0/24" {
+    traefik_edge: "Traefik"
+    xray_client: "Xray (client)"
+    vpn_client: "VPN (client)"
+
+    docker_vm: "Docker VM (Debian 13)\n192.168.8.240" {
+      proxy: "Docker network proxy\n192.168.12.0/24 (internal)" {
+        traefik: "Traefik\n:80 / :443 published on the VM"
+        gluetun: "Gluetun (VPN)"
+      }
+    }
+  }
+}
+
+# Traffic
+opnsense.classe -> opnsense.lan1.traefik_edge: "class network users"
+opnsense.lan1.docker_vm.proxy.traefik -> opnsense.lan1.traefik_edge: "services"
+opnsense.lan1.traefik_edge -> wan: "outbound"
+opnsense.lan1.xray_client <-> wan: "Xray tunnel"
+opnsense.lan1.vpn_client <-> opnsense.lan1.xray_client: "VPN over Xray"
+wan <-> homelab.xray_server: "VLESS + REALITY"
+homelab.xray_server <-> homelab.vpn_server
+opnsense.vpn_net -> opnsense.lan1.vpn_client
+
+opnsense.lan1.docker_vm.proxy.gluetun -> wan: "WireGuard (Mullvad)" {
+  style.stroke-dash: 4
+}

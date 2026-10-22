@@ -1,0 +1,95 @@
+# Divertiflix: inside the Docker VM (from ansible/group_vars/all/vars.yml)
+# Numbers are the last octet of the fixed IP: <docker_network_prefix>.<n>
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+direction: down
+
+title: |md
+  # Docker VM, network `proxy`
+  Services are defined in the `services:` map; DNS names are `<name>.home.arpa`.
+| {near: top-center}
+
+users: Clients { shape: person }
+
+vm: "docker-host VM (Debian 13, 192.168.8.240)" {
+  disks: Disks {
+    os: "/dev/vda\nsystem"
+    media: "/dev/vdb\nmounted on /srv/storage"
+  }
+
+  net: "Docker network proxy\n<docker_network_prefix>.0/24, gateway .1" {
+    infra: Infrastructure {
+      traefik: "Traefik .10\n:80 / :443"
+      step_ca: "Step CA .20\ninternal CA"
+      dns: "dnsmasq .53\nnames -> VM IP"
+    }
+
+    vpn_group: "VPN namespace" {
+      gluetun: "Gluetun .104\nMullvad WireGuard"
+      qbittorrent: "qBittorrent\n(network_mode: container:gluetun)"
+      gluetun -> qbittorrent: "shares network" { style.stroke-dash: 4 }
+    }
+
+    media: Media {
+      jellyfin: "Jellyfin .105"
+      prowlarr: "Prowlarr .101"
+      flaresolverr: "FlareSolverr .109"
+      sonarr: "Sonarr .102"
+      radarr: "Radarr .103"
+      bazarr: "Bazarr .107"
+      jellyseerr: "Jellyseerr .123"
+      cleanuparr: "Cleanuparr .119"
+    }
+
+    photos: Photos {
+      immich: "Immich .116"
+      immich_postgres: "Postgres .117"
+      immich_redis: "Valkey .118"
+      immich -> immich_postgres
+      immich -> immich_redis
+    }
+
+    it: "IT and documentation" {
+      glpi: "GLPI .111"
+      glpi_db: "MariaDB .120"
+      bookstack: "BookStack .121"
+      bookstack_db: "MariaDB .122"
+      glpi -> glpi_db
+      bookstack -> bookstack_db
+    }
+
+    misc: Other {
+      vaultwarden: "Vaultwarden .110"
+      homarr: "Homarr .115"
+      ntfy: "ntfy .124"
+    }
+  }
+}
+
+internet: "Internet\n(Mullvad server)" { shape: cloud }
+
+# Main flows
+users -> vm.net.infra.traefik: "HTTPS <name>.home.arpa"
+users -> vm.net.infra.dns: "DNS" { style.stroke-dash: 4 }
+vm.net.infra.step_ca -> vm.net.infra.traefik: "ACME certificates"
+vm.net.infra.traefik -> vm.net.media: routes
+vm.net.infra.traefik -> vm.net.photos: routes
+vm.net.infra.traefik -> vm.net.it: routes
+vm.net.infra.traefik -> vm.net.misc: routes
+vm.net.infra.traefik -> vm.net.vpn_group.qbittorrent: "routes (via Gluetun)"
+vm.net.vpn_group.gluetun -> internet: "VPN tunnel"
+
+# Storage
+vm.net.vpn_group.qbittorrent -> vm.disks.media: downloads
+vm.net.media.jellyfin -> vm.disks.media: reads
+
+# Typical app integrations (configured inside the apps, not by Ansible)
+vm.net.media.jellyseerr -> vm.net.media.sonarr: requests { style.stroke-dash: 4 }
+vm.net.media.jellyseerr -> vm.net.media.radarr: requests { style.stroke-dash: 4 }
+vm.net.media.sonarr -> vm.net.media.prowlarr: indexers { style.stroke-dash: 4 }
+vm.net.media.radarr -> vm.net.media.prowlarr: indexers { style.stroke-dash: 4 }
+vm.net.media.prowlarr -> vm.net.media.flaresolverr: { style.stroke-dash: 4 }

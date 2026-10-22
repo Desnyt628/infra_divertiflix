@@ -1,0 +1,66 @@
+# Divertiflix: how the infrastructure is built and checked
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+direction: right
+
+title: |md
+  # Build and check pipeline
+  OpenTofu creates the VM, Ansible configures it, CI and hooks guard the repo.
+| {near: top-center}
+
+dev: "Jump host (developer)" {
+  repo: "Git repo\ninfra_divertiflix"
+  make: "Makefile\nmake check"
+  hooks: "pre-commit\ngitleaks"
+  vault: "ansible-vault\nvault.yml (git-ignored)"
+  tfvars: "terraform.tfvars\n(git-ignored)"
+  token: "TF_VAR_proxmox_api_token\n(environment)"
+}
+
+github: GitHub {
+  actions: "Actions: lint.yml" {
+    ansible_job: "YAML + Ansible\nmake lint syntax"
+    tofu_job: "OpenTofu\nfmt + validate"
+    secrets_job: "gitleaks\nfull history"
+  }
+  remote: "Remote repo"
+}
+
+proxmox: "Proxmox VE" {
+  api: "API (token)"
+  image: "Debian 13 cloud image"
+  vm: "Docker VM\n(cloud-init, 2 disks)"
+  api -> vm: creates
+  image -> vm
+}
+
+host: "Docker VM configuration" {
+  base: "1. mount, docker" {
+    mount: mount
+    docker: docker
+  }
+  core: "2. dns, small_step, traefik" {
+    dns: dns
+    step: small_step
+    traefik: traefik
+  }
+  apps: "3. applications\n(media, photos, IT, misc)"
+  base -> core -> apps
+}
+
+# Flow
+dev.tfvars -> proxmox.api: "tofu apply"
+dev.token -> proxmox.api
+dev.vault -> host: "ansible-playbook\n(over SSH)"
+proxmox.vm -> host: "target"
+
+dev.repo -> dev.hooks: "git commit" { style.stroke-dash: 4 }
+dev.repo -> dev.make: "before push" { style.stroke-dash: 4 }
+dev.repo -> github.remote: "git push"
+github.remote -> github.actions: "on push / pull request"
+
+host.core.step -> dev.repo: "root CA -> cert/\n(git-ignored)" { style.stroke-dash: 4 }
