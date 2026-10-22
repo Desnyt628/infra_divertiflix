@@ -1,0 +1,11 @@
+---
+# qBittorrent uses the network of the gluetun container,
+# so it must be restarted whenever gluetun is recreated.
+- name: Restart qBittorrent
+  ansible.builtin.command: docker restart qbittorrent
+  register: gluetun_qbittorrent_restart
+  changed_when: true
+  # On the first run the qbittorrent container does not exist yet: not an error.
+  failed_when:
+    - gluetun_qbittorrent_restart.rc != 0
+    - "'No such container' not in gluetun_qbittorrent_restart.stderr"

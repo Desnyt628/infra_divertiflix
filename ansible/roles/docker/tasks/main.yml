@@ -8,6 +8,7 @@
       - gnupg
       - lsb-release
       - dnsutils
+      - python3-debian   # required by ansible.builtin.deb822_repository
     state: present
     update_cache: true
 
@@ -23,14 +24,22 @@
     dest: /etc/apt/keyrings/docker.asc
     mode: "0644"
 
-- name: Add Docker repository
-  ansible.builtin.apt_repository:
-    repo: >-
-      deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}
-      signed-by=/etc/apt/keyrings/docker.asc]
-      https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable
+- name: Remove the legacy one-line Docker source (replaced by docker.sources)
+  ansible.builtin.file:
+    path: /etc/apt/sources.list.d/docker.list
+    state: absent
+
+- name: Add Docker repository (deb822 format)
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: deb
+    uris: https://download.docker.com/linux/debian
+    suites: "{{ ansible_distribution_release }}"
+    components: stable
+    architectures:
+      - "{{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }}"
+    signed_by: /etc/apt/keyrings/docker.asc
     state: present
-    filename: docker
 
 - name: Install Docker, Compose plugin and the Python SDK used by Ansible modules
   ansible.builtin.apt:
@@ -74,11 +83,11 @@
 
 - name: Run test container
   ansible.builtin.command: docker run --rm hello-world
-  register: hello_world
+  register: docker_hello_world
   changed_when: false
 
 - name: Show check results
   ansible.builtin.debug:
     msg:
       - "{{ docker_versions.results | map(attribute='stdout') | list }}"
-      - "{{ hello_world.stdout_lines | first }}"
+      - "{{ docker_hello_world.stdout_lines | first }}"

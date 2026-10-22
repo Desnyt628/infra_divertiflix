@@ -16,11 +16,9 @@
   community.docker.docker_compose_v2:
     project_src: "{{ data_dir }}/gluetun"
     state: present
-  register: gluetun_up
+  notify: Restart qBittorrent
 
-# qBittorrent uses the network of the gluetun container,
-# so it must be restarted whenever gluetun is recreated.
-- name: Restart qBittorrent if Gluetun was recreated
-  ansible.builtin.command: docker restart qbittorrent
-  when: gluetun_up is changed
-  failed_when: false
+# Restart qBittorrent right now (not at the end of the play) if Gluetun
+# was recreated: see handlers/main.yml.
+- name: Apply pending handlers
+  ansible.builtin.meta: flush_handlers

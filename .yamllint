@@ -1,0 +1,24 @@
+---
+extends: default
+
+ignore: |
+  .ansible/
+  .terraform/
+  ansible/collections/ansible_collections/
+
+rules:
+  # Compose/Ansible lines with Jinja expressions are often long.
+  line-length:
+    max: 120
+    level: warning
+  # Allow `{ role: docker, tags: docker }` (one space inside braces).
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  # Ansible uses true/false, not yes/no; `on:` keys (CI workflows) are fine.
+  truthy:
+    allowed-values: ["true", "false"]
+    check-keys: false
+  # Keep the inline comments aligned with two spaces or more.
+  comments:
+    min-spaces-from-content: 2

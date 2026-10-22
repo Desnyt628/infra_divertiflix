@@ -31,7 +31,7 @@
     src: dnsmasq.conf.j2
     dest: "{{ data_dir }}/dns/dnsmasq.conf"
     mode: "0644"
-  register: dnsmasq_conf
+  register: dns_dnsmasq_conf
 
 - name: Deploy DNS docker-compose
   ansible.builtin.template:
@@ -43,7 +43,7 @@
   community.docker.docker_compose_v2:
     project_src: "{{ data_dir }}/dns"
     state: present
-    recreate: "{{ 'always' if dnsmasq_conf.changed else 'auto' }}"
+    recreate: "{{ 'always' if dns_dnsmasq_conf.changed else 'auto' }}"
 
 # ---- Check ----
 - name: Resolve a service name through the new DNS
