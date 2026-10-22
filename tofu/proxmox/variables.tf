@@ -41,7 +41,7 @@ variable "datastore_snippets" {
 
 variable "datastore_vm" {
   type        = string
-  default     = "a1"
+  default     = "local-lvm"
   description = "Datastore for the VM disks and the cloud-init drive"
 }
 
@@ -109,13 +109,13 @@ variable "vm_vlan_id" {
 
 variable "vm_ipv4_address" {
   type        = string
-  default     = "192.168.0.236/24"
+  default     = "192.168.8.240/24"
   description = "Must match docker_host_ip in ansible/group_vars/all/vars.yml"
 }
 
 variable "vm_gateway" {
   type    = string
-  default = "192.168.0.1"
+  default = "192.168.8.1"
 }
 
 variable "vm_dns_servers" {

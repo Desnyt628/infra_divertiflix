@@ -7,13 +7,13 @@ proxmox_node         = "proxmax"
 
 datastore_images   = "local"
 datastore_snippets = "local"
-datastore_vm       = "a1"
+datastore_vm       = "local-lvm"
 
 vm_name          = "docker-host"
 vm_cores         = 4
 vm_memory        = 16384
 vm_media_disk_gb = 500
 
-vm_ipv4_address = "192.168.0.236/24"
-vm_gateway      = "192.168.0.1"
+vm_ipv4_address = "192.168.8.240/24"
+vm_gateway      = "192.168.8.1"
 domain          = "home.arpa"

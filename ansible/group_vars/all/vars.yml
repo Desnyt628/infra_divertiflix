@@ -4,7 +4,7 @@ domain: home.arpa
 timezone: America/Toronto
 
 # ---------- Docker host ----------
-docker_host_ip: 192.168.0.236      # VM IP, adapt to the network plan
+docker_host_ip: 192.168.8.240      # VM IP, adapt to the network plan
 data_dir: /srv/docker              # config of each service
 storage_dir: /srv/storage          # media and large data
 storage_device: /dev/vdb           # 2nd virtual disk created by OpenTofu
@@ -13,8 +13,8 @@ pgid: 1000
 
 # ---------- Docker network ----------
 docker_network_name: proxy
-docker_network_subnet: 172.18.0.0/24
-docker_network_gateway: 172.18.0.1
+docker_network_subnet: 192.168.12.0/24
+docker_network_gateway: 192.168.12.1
 dns_upstreams:
   - 1.1.1.1
   - 8.8.8.8
@@ -27,7 +27,7 @@ dns_extra_hosts:
   - qbittorrent                    # exposed through the gluetun container
 
 # ---------- Step CA ----------
-step_ca_listen_ip: 0.0.0.0         # use 127.0.0.1 if no other host needs the ACME endpoint
+step_ca_listen_ip: 127.0.0.1         # use 127.0.0.1 if no other host needs the ACME endpoint
 
 # ---------- Traefik ----------
 traefik_log_level: INFO
