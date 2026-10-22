@@ -12,9 +12,10 @@ puid: 1000
 pgid: 1000
 
 # ---------- Docker network ----------
+docker_network_prefix: 192.168.12
 docker_network_name: proxy
-docker_network_subnet: 192.168.12.0/24
-docker_network_gateway: 192.168.12.1
+docker_network_subnet: "{{ docker_network_prefix }}.0/24"
+docker_network_gateway: "{{ docker_network_prefix }}.1"
 dns_upstreams:
   - 1.1.1.1
   - 8.8.8.8
@@ -45,31 +46,31 @@ vaultwarden_signups_allowed: true   # set to false once the accounts are created
 # port: internal port that Traefik forwards to (omit if not exposed)
 # The URL of each service is <name>.{{ domain }} (underscores become dashes)
 services:
-  traefik: { ip: 172.18.0.10 }
-  step_ca: { ip: 172.18.0.20 }
-  nginx: { ip: 172.18.0.30, port: 80 }
-  dns: { ip: 172.18.0.53 }
-  prowlarr: { ip: 172.18.0.101, port: 9696 }
-  sonarr: { ip: 172.18.0.102, port: 8989 }
-  radarr: { ip: 172.18.0.103, port: 7878 }
-  gluetun: { ip: 172.18.0.104 }   # exposes qBittorrent (port 8080)
-  jellyfin: { ip: 172.18.0.105, port: 8096 }
-  bazarr: { ip: 172.18.0.107, port: 6767 }
-  flaresolverr: { ip: 172.18.0.109 }
-  vaultwarden: { ip: 172.18.0.110, port: 80 }
-  glpi: { ip: 172.18.0.111, port: 80 }
-  xray: { ip: 172.18.0.113 }
-  homarr: { ip: 172.18.0.115, port: 3000 }
-  immich: { ip: 172.18.0.116, port: 2283 }
-  immich_postgres: { ip: 172.18.0.117 }
-  immich_redis: { ip: 172.18.0.118 }
-  cleanuparr: { ip: 172.18.0.119, port: 11011 }
-  glpi_db: { ip: 172.18.0.120 }
-  bookstack: { ip: 172.18.0.121, port: 80 }
-  bookstack_db: { ip: 172.18.0.122 }
-  jellyseerr: { ip: 172.18.0.123, port: 5055 }
-  ntfy: { ip: 172.18.0.124, port: 80 }
-  uptime_kuma: { ip: 172.18.0.126, port: 3001 }
+  traefik: { ip: "{{ docker_network_prefix }}.10" }
+  step_ca: { ip: "{{ docker_network_prefix }}.20" }
+  nginx: { ip: "{{ docker_network_prefix }}.30", port: 80 }
+  dns: { ip: "{{ docker_network_prefix }}.53" }
+  prowlarr: { ip: "{{ docker_network_prefix }}.101", port: 9696 }
+  sonarr: { ip: "{{ docker_network_prefix }}.102", port: 8989 }
+  radarr: { ip: "{{ docker_network_prefix }}.103", port: 7878 }
+  gluetun: { ip: "{{ docker_network_prefix }}.104" }   # exposes qBittorrent (port 8080)
+  jellyfin: { ip: "{{ docker_network_prefix }}.105", port: 8096 }
+  bazarr: { ip: "{{ docker_network_prefix }}.107", port: 6767 }
+  flaresolverr: { ip: "{{ docker_network_prefix }}.109" }
+  vaultwarden: { ip: "{{ docker_network_prefix }}.110", port: 80 }
+  glpi: { ip: "{{ docker_network_prefix }}.111", port: 80 }
+  xray: { ip: "{{ docker_network_prefix }}.113" }
+  homarr: { ip: "{{ docker_network_prefix }}.115", port: 3000 }
+  immich: { ip: "{{ docker_network_prefix }}.116", port: 2283 }
+  immich_postgres: { ip: "{{ docker_network_prefix }}.117" }
+  immich_redis: { ip: "{{ docker_network_prefix }}.118" }
+  cleanuparr: { ip: "{{ docker_network_prefix }}.119", port: 11011 }
+  glpi_db: { ip: "{{ docker_network_prefix }}.120" }
+  bookstack: { ip: "{{ docker_network_prefix }}.121", port: 80 }
+  bookstack_db: { ip: "{{ docker_network_prefix }}.122" }
+  jellyseerr: { ip: "{{ docker_network_prefix }}.123", port: 5055 }
+  ntfy: { ip: "{{ docker_network_prefix }}.124", port: 80 }
+  uptime_kuma: { ip: "{{ docker_network_prefix }}.126", port: 3001 }
 
 # ---------- Image versions ----------
 # TODO: replace "latest" with a fixed version tag before the demo

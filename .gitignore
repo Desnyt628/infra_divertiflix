@@ -15,3 +15,5 @@ ansible/.secret/
 *.crt
 *.key
 *.pem
+
+*.lock

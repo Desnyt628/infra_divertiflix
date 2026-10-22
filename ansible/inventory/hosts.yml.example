@@ -2,6 +2,6 @@
 all:
   hosts:
     docker-host:
-      ansible_host: 192.168.0.236   # adapt to the real VM IP
+      ansible_host: 192.168.8.240   # adapt to the real VM IP
       ansible_user: debian
       ansible_ssh_private_key_file: ~/.ssh/id_rsa
