@@ -1,19 +1,67 @@
-# OpenTofu
-tofu/**/.terraform/
-tofu/**/*.tfstate*
-tofu/**/plan
-tofu/**/*.tfvars
-!tofu/**/*.tfvars.example
-
-# Ansible
-ansible/inventory/hosts.yml
+# ---------- Secrets (never commit) ----------
+# Ansible vault and vault password files (only vault.yml.example is committed)
 ansible/group_vars/all/vault.yml
-ansible/collections/ansible_collections/
+**/vault.yml
+.vault_pass*
+**/.vault_pass*
 ansible/.secret/
+# Real inventory (only hosts.yml.example is committed)
+ansible/inventory/hosts.yml
+# Environment files
+.env
+.env.*
+!.env.example
 
-# Certificates and keys
+# ---------- Certificates and keys ----------
+# cert/ is filled by Ansible (root CA of Step CA); keep only the placeholder
+cert/*
+!cert/.gitkeep
 *.crt
 *.key
 *.pem
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
 
-*.lock
+# ---------- OpenTofu / Terraform ----------
+tofu/**/.terraform/
+tofu/**/*.tfstate
+tofu/**/*.tfstate.*
+tofu/**/*.tfplan
+tofu/**/plan
+tofu/**/crash.log
+tofu/**/crash.*.logxd
+tofu/**/override.tf
+tofu/**/override.tf.json
+tofu/**/*_override.tf
+tofu/**/*_override.tf.json
+# Variable files hold real values; the .example files are committed
+tofu/**/*.tfvars
+tofu/**/*.tfvars.json
+!tofu/**/*.tfvars.example
+# .terraform.lock.hcl is NOT ignored: commit it to pin the provider version
+
+# ---------- Ansible ----------
+# Local cache/lock created by ansible and ansible-lint
+.ansible/
+ansible/collections/ansible_collections/
+*.retry
+
+# ---------- Editors, OS, tooling ----------
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+.venv/
+venv/
+__pycache__/
+.pre-commit-cache/
+
+# ---------- Misc ----------
+*.log
+*.bak
+*.orig
+*.tmp
