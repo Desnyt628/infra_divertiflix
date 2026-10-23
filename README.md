@@ -6,6 +6,8 @@ built for the course 420-511-SH (Équipe 1).
 - **OpenTofu** creates one Debian 13 VM on a Proxmox VE hypervisor.
 - **Ansible** configures that VM and deploys every service in Docker Compose behind **Traefik**.
 - An internal certificate authority (**Step CA**) issues the HTTPS certificates.
+- Everything is run from a **Debian jump host** (Debian 13 "trixie"), see
+  [On the jump host](#on-the-jump-host).
 
 No real secret is stored in this repository. Passwords and keys live in an encrypted
 Ansible vault that is never committed (see [Secrets](#secrets)).
@@ -63,7 +65,7 @@ Each service is reachable at `<name>.home.arpa` (underscores become dashes).
 tofu/proxmox/     OpenTofu: VM, Debian cloud image, cloud-init (bpg/proxmox provider)
 ansible/          playbook.yml, one role per service, group_vars/all/vars.yml
 cert/             root CA of Step CA, fetched by Ansible (git-ignored except .gitkeep)
-Makefile          shortcuts for the checks (make help)
+Makefile          install dependencies, update the repo, run the checks (make help)
 .github/          CI workflow (lint, OpenTofu, secret scan)
 .yamllint         YAML style rules
 .pre-commit-config.yaml   git hooks (gitleaks)
@@ -85,18 +87,54 @@ Enable the content types `snippets` and `import` on the datastore used for them.
 
 ### On the jump host
 
+The jump host is the machine that runs OpenTofu and Ansible. **It must run Debian**
+(13 "trixie" is the tested version): `make deps` installs everything with `apt`, and other
+distributions are not supported. It also needs internet access.
+
+You need `root`, or a user that can use `sudo`. On a fresh Debian the first user is often not
+in the `sudo` group. Fix it once, as root, then log out of the desktop session and back in:
+
 ```bash
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa
+su -
+apt install -y sudo        # only if sudo is missing
+usermod -aG sudo <user>
+```
+
+Get the repository (a `git clone`, or the ZIP downloaded from GitHub and unzipped), then run,
+from its folder:
+
+```bash
+make deps
+```
+
+`make deps` is safe to run again. It installs:
+
+- `git`, `make`, the SSH client, Python 3;
+- Ansible, with the collections used by the roles (`community.docker`, `community.general`,
+  `ansible.posix`);
+- OpenTofu, from the official OpenTofu apt repository (adds a source in
+  `/etc/apt/sources.list.d/`);
+- the dev tools: `yamllint`, `ansible-lint`, `pre-commit` (and it enables the gitleaks hook);
+- an SSH key `~/.ssh/id_rsa`, only if none exists yet.
+
+It never handles secrets. Then finish the preparation by hand:
+
+```bash
 ssh-copy-id -i ~/.ssh/id_rsa root@<proxmox-ip>
 eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_rsa
 export TF_VAR_proxmox_api_token='terraform@pve!provider=<secret>'
 ```
 
-Install OpenTofu, Ansible and the Ansible collections:
+#### Getting the latest version
 
 ```bash
-ansible-galaxy collection install -r ansible/collections/requirements.yml
+make update
 ```
+
+For machines that only use the repository and never push. It fetches the latest `main` and
+**overwrites every local change to tracked files**. Files that are not in the repository
+(`vault.yml`, `hosts.yml`, `terraform.tfvars`, `cert/`) are kept. It also works on a ZIP
+download: it installs git if needed and links the folder to the repository.
 
 ## Deployment
 
@@ -170,14 +208,15 @@ make check   # lint + syntax-check + OpenTofu fmt/validate
 
 | Target | What it does |
 |---|---|
+| `make deps` | installs every dependency (Debian), see [On the jump host](#on-the-jump-host) |
+| `make update` | fetches the latest version and overwrites local changes to tracked files |
 | `make lint` | yamllint and ansible-lint |
 | `make syntax` | `ansible-playbook --syntax-check` with the example inventory |
 | `make tofu-fmt` | checks OpenTofu formatting |
 | `make tofu-validate` | `tofu init -backend=false` then `tofu validate` (needs internet) |
 | `make hooks` | installs the git pre-commit hook (gitleaks) |
 
-Needs `yamllint`, `ansible-lint` and the `ansible` package (it includes the collections used by
-the roles). The same targets run in GitHub Actions on every push and pull request, plus a
+Needs `yamllint`, `ansible-lint` and the `ansible` package (`make deps` installs them). The same targets run in GitHub Actions on every push and pull request, plus a
 gitleaks scan of the full history. Run `make hooks` once per clone so secrets are blocked
 before they are committed.
 
