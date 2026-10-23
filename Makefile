@@ -21,7 +21,10 @@ REPO_URL ?= https://github.com/Desnyt628/infra_divertiflix.git
 REMOTE   ?= origin
 BRANCH   ?= main
 
-.PHONY: help update git-setup lint yamllint ansible-lint syntax tofu-fmt tofu-validate check hooks clean
+# Prefix for privileged commands (empty when already root).
+SUDO := $(shell if [ "$$(id -u)" -ne 0 ]; then echo sudo; fi)
+
+.PHONY: help deps deps-packages deps-opentofu deps-collections deps-ssh-key update git-setup lint yamllint ansible-lint syntax tofu-fmt tofu-validate check hooks clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-14s %s\n", $$1, $$2}'
@@ -61,6 +64,51 @@ git-setup: ## Install git if missing and link this folder to the repo (zip downl
 	@if [ "$$(git remote get-url $(REMOTE) 2>/dev/null)" != "$(REPO_URL)" ]; then \
 	  git remote remove $(REMOTE) 2>/dev/null || true; \
 	  git remote add $(REMOTE) $(REPO_URL); \
+	fi
+
+# ---------------------------------------------------------------------------
+# Dependencies (Debian / Ubuntu). Safe to run again: everything is idempotent.
+# ---------------------------------------------------------------------------
+deps: deps-packages deps-opentofu deps-collections deps-ssh-key hooks ## Install everything needed (deploy + dev tools)
+	@echo ""
+	@echo "Dependencies installed. Still to do by hand (secrets are never handled here):"
+	@echo "  - ssh-copy-id -i ~/.ssh/id_rsa root@<proxmox-ip>"
+	@echo "  - export TF_VAR_proxmox_api_token='...'"
+	@echo "  - create ~/.vault_pass_divertiflix (chmod 600) and fill vault.yml"
+
+# apt packages: make, ssh client, Python, Ansible (+ collections), and the dev tools
+deps-packages: git-setup
+	@command -v apt-get >/dev/null 2>&1 || { echo "deps supports Debian/Ubuntu (apt) only."; exit 1; }
+	$(SUDO) apt-get update
+	$(SUDO) apt-get install -y make openssh-client python3 curl gnupg ca-certificates \
+	  ansible ansible-lint yamllint pre-commit
+
+# OpenTofu is not in Debian's repos: add the official OpenTofu apt repository
+# (signing keys in /etc/apt/keyrings, source in /etc/apt/sources.list.d/opentofu.list)
+deps-opentofu: deps-packages
+	@if command -v tofu >/dev/null 2>&1; then echo "OpenTofu already installed: $$(tofu version | head -1)"; else \
+	  echo "Adding the official OpenTofu apt repository..."; \
+	  $(SUDO) install -m 0755 -d /etc/apt/keyrings && \
+	  curl -fsSL https://get.opentofu.org/opentofu.gpg | $(SUDO) tee /etc/apt/keyrings/opentofu.gpg >/dev/null && \
+	  curl -fsSL https://packages.opentofu.org/opentofu/tofu/gpgkey | $(SUDO) gpg --no-tty --batch --dearmor --yes -o /etc/apt/keyrings/opentofu-repo.gpg >/dev/null && \
+	  $(SUDO) chmod a+r /etc/apt/keyrings/opentofu.gpg /etc/apt/keyrings/opentofu-repo.gpg && \
+	  printf '%s\n' \
+	    'deb [signed-by=/etc/apt/keyrings/opentofu.gpg,/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main' \
+	    'deb-src [signed-by=/etc/apt/keyrings/opentofu.gpg,/etc/apt/keyrings/opentofu-repo.gpg] https://packages.opentofu.org/opentofu/tofu/any/ any main' \
+	    | $(SUDO) tee /etc/apt/sources.list.d/opentofu.list >/dev/null && \
+	  $(SUDO) chmod a+r /etc/apt/sources.list.d/opentofu.list && \
+	  $(SUDO) apt-get update && $(SUDO) apt-get install -y tofu; \
+	fi
+
+# Ansible collections used by the roles, installed inside the repo (git-ignored)
+deps-collections: deps-packages
+	cd $(ANSIBLE_DIR) && ansible-galaxy collection install -r collections/requirements.yml -p collections
+
+# Create an SSH key only if none exists (ssh-keygen asks for the passphrase itself)
+deps-ssh-key: deps-packages
+	@if [ -f $(HOME)/.ssh/id_rsa ]; then echo "SSH key already exists, left untouched."; else \
+	  mkdir -p $(HOME)/.ssh && chmod 700 $(HOME)/.ssh && \
+	  ssh-keygen -t rsa -b 4096 -f $(HOME)/.ssh/id_rsa; \
 	fi
 
 $(CURDIR)/.vault_pass_dummy:
