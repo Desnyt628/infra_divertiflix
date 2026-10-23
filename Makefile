@@ -22,6 +22,8 @@ REMOTE   ?= origin
 BRANCH   ?= main
 
 # Prefix for privileged commands (empty when already root).
+BASHRC ?= $(HOME)/.bashrc
+
 SUDO := $(shell if [ "$$(id -u)" -ne 0 ]; then echo sudo; fi)
 
 # Fails with a clear message when we are not root and cannot use sudo.
@@ -29,7 +31,7 @@ SUDO_OK = if [ "$$(id -u)" -ne 0 ] && ! { command -v sudo >/dev/null 2>&1 && id 
   echo "User $$(id -un) cannot use sudo. Either run as root (su -), or as root run:"; \
   echo "  usermod -aG sudo $$(id -un)   (then log out and back in)"; exit 1; fi
 
-.PHONY: help deps deps-packages deps-opentofu deps-collections deps-ssh-key update git-setup lint yamllint ansible-lint syntax tofu-fmt tofu-validate check hooks clean
+.PHONY: help deps deps-packages deps-opentofu deps-collections deps-ssh-key ssh-agent ssh-agent-remove update git-setup lint yamllint ansible-lint syntax tofu-fmt tofu-validate check hooks clean
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "} {printf "  %-14s %s\n", $$1, $$2}'
@@ -118,6 +120,24 @@ deps-ssh-key: deps-packages
 	  mkdir -p $(HOME)/.ssh && chmod 700 $(HOME)/.ssh && \
 	  ssh-keygen -t rsa -b 4096 -f $(HOME)/.ssh/id_rsa; \
 	fi
+
+# OPT-IN (not part of `make deps`): load the SSH key into an agent in every new terminal.
+# OpenTofu connects to Proxmox through the ssh-agent, so the key must be loaded.
+# Adds one marked block to ~/.bashrc; `make ssh-agent-remove` takes it out again.
+ssh-agent: ## Opt-in: auto-start ssh-agent and load ~/.ssh/id_rsa from ~/.bashrc
+	@if grep -q 'divertiflix ssh-agent' $(BASHRC) 2>/dev/null; then \
+	  echo "Already present in $(BASHRC), nothing changed."; else \
+	  printf '%s\n' '' \
+	    '# >>> divertiflix ssh-agent (added by make ssh-agent) >>>' \
+	    'if [ -z "$$SSH_AUTH_SOCK" ]; then eval "$$(ssh-agent -s)" >/dev/null; fi' \
+	    'if [ -f "$$HOME/.ssh/id_rsa" ] && ! ssh-add -l >/dev/null 2>&1; then ssh-add "$$HOME/.ssh/id_rsa"; fi' \
+	    '# <<< divertiflix ssh-agent <<<' >> $(BASHRC); \
+	  echo "Block added to $(BASHRC). Open a new terminal (or run: source $(BASHRC))."; \
+	fi
+
+ssh-agent-remove: ## Remove the block added by `make ssh-agent`
+	@sed -i '/# >>> divertiflix ssh-agent/,/# <<< divertiflix ssh-agent/d' $(BASHRC) 2>/dev/null; \
+	  echo "Block removed from $(BASHRC) (if it was there)."
 
 $(CURDIR)/.vault_pass_dummy:
 	@echo dummy > $@
