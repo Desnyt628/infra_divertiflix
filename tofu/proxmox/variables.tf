@@ -118,11 +118,15 @@ variable "vm_gateway" {
   default = "192.168.8.1"
 }
 
+
+
 variable "vm_dns_servers" {
   type        = list(string)
   default     = ["1.1.1.1", "8.8.8.8"]
-  description = "Used until the dns role takes over"
+  description = "DNS servers given to the VM by cloud-init, until the dns role takes over. Set them in terraform.tfvars (for example a local resolver)."
 }
+
+
 
 variable "domain" {
   type    = string

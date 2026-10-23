@@ -17,3 +17,9 @@ vm_media_disk_gb = 500
 vm_ipv4_address = "192.168.8.240/24"
 vm_gateway      = "192.168.8.1"
 domain          = "home.arpa"
+
+
+# DNS servers given to the VM by cloud-init (used until the dns role takes over).
+# Point them at your local resolver if the network requires it, for example:
+#   vm_dns_servers = ["192.168.8.1"]
+vm_dns_servers = ["1.1.1.1", "8.8.8.8"]
