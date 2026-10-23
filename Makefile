@@ -24,6 +24,11 @@ BRANCH   ?= main
 # Prefix for privileged commands (empty when already root).
 SUDO := $(shell if [ "$$(id -u)" -ne 0 ]; then echo sudo; fi)
 
+# Fails with a clear message when we are not root and cannot use sudo.
+SUDO_OK = if [ "$$(id -u)" -ne 0 ] && ! { command -v sudo >/dev/null 2>&1 && id -nG | tr ' ' '\n' | grep -qxE 'sudo|wheel'; }; then \
+  echo "User $$(id -un) cannot use sudo. Either run as root (su -), or as root run:"; \
+  echo "  usermod -aG sudo $$(id -un)   (then log out and back in)"; exit 1; fi
+
 .PHONY: help deps deps-packages deps-opentofu deps-collections deps-ssh-key update git-setup lint yamllint ansible-lint syntax tofu-fmt tofu-validate check hooks clean
 
 help: ## Show this help
@@ -43,6 +48,7 @@ git-setup: ## Install git if missing and link this folder to the repo (zip downl
 	@if ! command -v git >/dev/null 2>&1; then \
 	  echo "git not found, installing it..."; \
 	  SUDO=""; if [ "$$(id -u)" -ne 0 ]; then SUDO="sudo"; fi; \
+	  $(SUDO_OK); \
 	  if command -v apt-get >/dev/null 2>&1; then \
 	    $$SUDO apt-get update && $$SUDO apt-get install -y git; \
 	  elif command -v dnf >/dev/null 2>&1; then $$SUDO dnf install -y git; \
@@ -53,13 +59,14 @@ git-setup: ## Install git if missing and link this folder to the repo (zip downl
 	  else echo "No supported package manager: install git manually."; exit 1; fi; \
 	fi
 	@command -v git >/dev/null 2>&1 || { echo "git is still missing, aborting."; exit 1; }
+	@if [ "$$(stat -c %u .)" != "$$(id -u)" ] && \
+	   ! git config --global --get-all safe.directory | grep -qxF "$(CURDIR)"; then \
+	  echo "Folder owned by another user: trusting $(CURDIR) (git safe.directory)"; \
+	  git config --global --add safe.directory "$(CURDIR)"; \
+	fi
 	@if [ ! -d .git ]; then \
 	  echo "No .git folder (zip download?): linking this folder to $(REPO_URL)"; \
 	  git init -q -b $(BRANCH) . && git remote add $(REMOTE) $(REPO_URL); \
-	fi
-	@if ! git rev-parse --git-dir >/dev/null 2>&1; then \
-	  echo "Trusting $(CURDIR) (different owner)"; \
-	  git config --global --add safe.directory "$(CURDIR)"; \
 	fi
 	@if [ "$$(git remote get-url $(REMOTE) 2>/dev/null)" != "$(REPO_URL)" ]; then \
 	  git remote remove $(REMOTE) 2>/dev/null || true; \
@@ -79,6 +86,7 @@ deps: deps-packages deps-opentofu deps-collections deps-ssh-key hooks ## Install
 # apt packages: make, ssh client, Python, Ansible (+ collections), and the dev tools
 deps-packages: git-setup
 	@command -v apt-get >/dev/null 2>&1 || { echo "deps supports Debian/Ubuntu (apt) only."; exit 1; }
+	@$(SUDO_OK)
 	$(SUDO) apt-get update
 	$(SUDO) apt-get install -y make openssh-client python3 curl gnupg ca-certificates \
 	  ansible ansible-lint yamllint pre-commit
