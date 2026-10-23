@@ -63,6 +63,9 @@ git-setup: ## Install git if missing and link this folder to the repo (zip downl
 	  git remote add $(REMOTE) $(REPO_URL); \
 	fi
 
+$(CURDIR)/.vault_pass_dummy:
+	@echo dummy > $@
+
 lint: yamllint ansible-lint ## YAML and Ansible lint
 
 yamllint: ## Lint every YAML file (rules in .yamllint)
