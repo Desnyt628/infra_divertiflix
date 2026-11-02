@@ -1,0 +1,61 @@
+---
+- name: Create xray_vpn_gateway directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  loop:
+    - /srv/storage/xray_vpn_gateway
+    - /srv/storage/xray_vpn_gateway/config
+
+- name: Deploy xray_vpn_gateway Dockerfile
+  ansible.builtin.copy:
+    src: Dockerfile
+    dest: /srv/storage/xray_vpn_gateway/Dockerfile
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Deploy xray_vpn_gateway entrypoint.sh
+  ansible.builtin.copy:
+    src: entrypoint.sh
+    dest: /srv/storage/xray_vpn_gateway/entrypoint.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Deploy xray.json (contains the REALITY UUID/keys)
+  ansible.builtin.template:
+    src: xray.json.j2
+    dest: /srv/storage/xray_vpn_gateway/config/xray.json
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Deploy client.ovpn (contains certs/keys for pfsense2)
+  ansible.builtin.copy:
+    content: "{{ vault_xray_vpn_gateway_ovpn_client_config }}"
+    dest: /srv/storage/xray_vpn_gateway/config/client.ovpn
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Deploy xray_vpn_gateway docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /srv/storage/xray_vpn_gateway/docker-compose.yml
+    owner: root
+    group: root
+    mode: "0600"
+  register: xray_vpn_gateway_compose
+
+- name: Start xray_vpn_gateway
+  community.docker.docker_compose_v2:
+    project_src: /srv/storage/xray_vpn_gateway
+    build: always
+    state: present
+  when: xray_vpn_gateway.enabled | default(true)

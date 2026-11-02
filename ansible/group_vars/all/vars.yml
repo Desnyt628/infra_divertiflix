@@ -28,6 +28,18 @@ dns_extra_hosts:
   - step-ca
   - qbittorrent                    # exposed through the gluetun container
 
+
+# new top-level key (not part of the `services:` Traefik map — this
+# container uses network_mode: host, it isn't behind Traefik)
+xray_vpn_gateway:
+  enabled: true
+  ovpn_target_address: "CHANGE_ME_PFSENSE2_IP"
+  ovpn_target_port: 1194
+  xray_remote_address: "CHANGE_ME_SERVER1.ddns.net"
+  xray_remote_port: 443
+  reality_server_name: "CHANGE_ME_SNI"
+  reality_fingerprint: "chrome"
+
 # ---------- Step CA ----------
 step_ca_listen_ip: 127.0.0.1         # use 127.0.0.1 if no other host needs the ACME endpoint
 
@@ -99,4 +111,4 @@ images:
   immich_postgres: ghcr.io/immich-app/postgres:14-vectorchord0.3.0-pgvectors0.2.0
   immich_redis: valkey/valkey:8-bookworm
   uptime_kuma: louislam/uptime-kuma:latest
-  xray: ghcr.io/xtls/xray-core:latest
+  xray_vpn_gateway: "xray_vpn_gateway:latest"

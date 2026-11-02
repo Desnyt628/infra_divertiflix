@@ -1,0 +1,15 @@
+services:
+  xray_vpn_gateway:
+    build: .
+    image: "{{ images.xray_vpn_gateway }}"
+    container_name: xray_vpn_gateway
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    sysctls:
+      - net.ipv4.ip_forward=1
+    volumes:
+      - ./config:/config:ro
+    restart: unless-stopped

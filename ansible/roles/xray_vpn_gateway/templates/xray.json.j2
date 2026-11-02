@@ -1,0 +1,45 @@
+{
+  "log": { "loglevel": "warning" },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": {{ xray_vpn_gateway.ovpn_target_port }},
+      "protocol": "dokodemo-door",
+      "settings": {
+        "address": "{{ xray_vpn_gateway.ovpn_target_address }}",
+        "port": {{ xray_vpn_gateway.ovpn_target_port }},
+        "network": "tcp"
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "{{ xray_vpn_gateway.xray_remote_address }}",
+            "port": {{ xray_vpn_gateway.xray_remote_port }},
+            "users": [
+              {
+                "id": "{{ vault_xray_vpn_gateway_uuid }}",
+                "flow": "xtls-rprx-vision",
+                "encryption": "none"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "{{ xray_vpn_gateway.reality_server_name }}",
+          "fingerprint": "{{ xray_vpn_gateway.reality_fingerprint }}",
+          "publicKey": "{{ vault_xray_vpn_gateway_reality_public_key }}",
+          "shortId": "{{ vault_xray_vpn_gateway_reality_short_id }}"
+        }
+      }
+    }
+  ]
+}

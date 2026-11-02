@@ -26,6 +26,6 @@
     - { role: bookstack, tags: bookstack }
     - { role: ntfy, tags: ntfy }
     # Not deployed by default:
-    # - { role: nginx,        tags: nginx }
-    # - { role: xray,         tags: xray }
-    # - { role: uptime_kuma,  tags: uptime_kuma }
+    # - { role: nginx, tags: nginx }
+    # - { role: xray_vpn_gateway, tags: xray_vpn_gateway }
+    # - { role: uptime_kuma, tags: uptime_kuma }

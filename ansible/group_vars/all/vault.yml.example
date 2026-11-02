@@ -13,6 +13,10 @@ mullvad_private_key: CHANGE_ME
 mullvad_addresses: CHANGE_ME
 ntfy_admin_user: CHANGE_ME
 ntfy_admin_password_hash: CHANGE_ME   # bcrypt hash
-xray_uuid: CHANGE_ME
-xray_public_key: CHANGE_ME
-xray_short_id: CHANGE_ME
+vault_xray_vpn_gateway_uuid: "CHANGE_ME_UUID"
+vault_xray_vpn_gateway_reality_public_key: "CHANGE_ME_PUBKEY"
+vault_xray_vpn_gateway_reality_short_id: "CHANGE_ME_SHORTID"
+vault_xray_vpn_gateway_ovpn_client_config: |
+  CHANGE_ME_FULL_OVPN_CLIENT_CONFIG
+  # paste the whole .ovpn here (client, remote 127.0.0.1 1194, proto tcp,
+  # <ca>/<cert>/<key>/<tls-auth> inline blocks), indented under this key
