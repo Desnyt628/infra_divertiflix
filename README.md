@@ -258,7 +258,7 @@ before they are committed.
   tiny auth
 
 
-echo -n "monTexte" | base64
+echo "base64:$(openssl rand -base64 32)"
 
 sudo apt install apache2-utils
 htpasswd -nbBC 10 "" 'monMotDePasse' | tr -d ':\n'

@@ -112,3 +112,21 @@ images:
   immich_redis: valkey/valkey:8-bookworm
   uptime_kuma: louislam/uptime-kuma:latest
   xray_vpn_gateway: "xray_vpn_gateway:latest"
+
+
+sonarr
+prowlarr
+bazarr
+bookstack
+cleanuparr
+glpi
+homarr
+immich
+jellyfin
+jellyseerr
+ntfy
+qbittorrent
+radarr
+step-ca
+traefik
+vaultwarden
