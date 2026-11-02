@@ -251,3 +251,14 @@ before they are committed.
 - Backups (Proxmox Backup Server to the NAS) are not part of this repository yet.
 - Vaultwarden signups are open until the first accounts exist
   (`vaultwarden_signups_allowed`).
+
+
+
+  add pocket id
+  tiny auth
+
+
+echo -n "monTexte" | base64
+
+sudo apt install apache2-utils
+htpasswd -nbBC 10 "" 'monMotDePasse' | tr -d ':\n'
