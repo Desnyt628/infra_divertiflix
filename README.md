@@ -262,3 +262,21 @@ echo "base64:$(openssl rand -base64 32)"
 
 sudo apt install apache2-utils
 htpasswd -nbBC 10 "" 'monMotDePasse' | tr -d ':\n'
+
+
+sonarr
+prowlarr
+bazarr
+bookstack
+cleanuparr
+glpi
+homarr
+immich
+jellyfin
+jellyseerr
+ntfy
+qbittorrent
+radarr
+step-ca
+traefik
+vaultwarden
